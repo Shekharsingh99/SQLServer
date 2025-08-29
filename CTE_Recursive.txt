@@ -1,0 +1,36 @@
+-- Declare a variable to hold the minimum starting value (here: 5)
+DECLARE @MinAnniversary INT = 5
+
+-- Using a Common Table Expression (CTE) to generate a sequence of values
+;WITH cte (ServiceValue)
+AS (
+    -- Anchor member: start with the initial value (5)
+    SELECT @MinAnniversary ServiceValue
+
+    UNION ALL
+
+    -- Recursive member: add 5 to the previous value
+    -- This will keep generating values in steps of 5
+    SELECT ServiceValue + 5
+    FROM   cte
+    -- Stop condition: continue only while value < 50
+    WHERE  ServiceValue < 50
+)
+
+-- Final output: Select all generated values from the CTE
+SELECT * 
+FROM   cte
+
+
+
+What happens here
+
+@MinAnniversary = 5 → Starting value.
+
+Anchor row → Inserts first row = 5.
+
+Recursive part → Adds +5 to last generated value each time.
+
+Stop condition → Stops when ServiceValue reaches or exceeds 50.
+
+Final result → Numbers 5, 10, 15, 20, 25, 30, 35, 40, 45, 50.
