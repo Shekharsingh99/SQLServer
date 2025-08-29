@@ -1,0 +1,93 @@
+-- Declare a variable to hold the GroupID (in this case, 111)
+DECLARE @GroupID INT = 111  
+
+-- Create a table variable to store dealer codes for this group
+-- 'IsProcessed' is used as a flag (0 = not processed, 1 = processed)
+DECLARE @DealerList TABLE (
+    DealerCode VARCHAR(50), 
+    IsProcessed INT DEFAULT(0)
+)
+
+-- Insert all dealers belonging to the given GroupID into the table variable
+INSERT INTO @DealerList (DealerCode)
+SELECT DealerCode
+FROM   TblGroupDealer
+WHERE  GroupID = @GroupID
+
+-- Declare a variable to hold one dealer code at a time
+DECLARE @DealerCode VARCHAR(50)
+
+-- Pick the first dealer code where IsProcessed = 0 (not yet processed)
+SET @DealerCode = (
+    SELECT TOP 1 DealerCode 
+    FROM   @DealerList 
+    WHERE  IsProcessed = 0
+)
+
+-- Loop until there are no more unprocessed dealer codes
+WHILE @DealerCode IS NOT NULL
+BEGIN
+    -- Mark the current dealer as processed
+    UPDATE @DealerList 
+    SET    IsProcessed = 1 
+    WHERE  DealerCode = @DealerCode
+
+    -- Fetch the next unprocessed dealer code
+    SET @DealerCode = (
+        SELECT TOP 1 DealerCode 
+        FROM   @DealerList 
+        WHERE  IsProcessed = 0
+    )
+END
+
+
+
+
+Explanation of Flow:
+
+A list of dealers is collected for a specific group (TblGroupDealer table).
+
+A table variable (@DealerList) tracks dealers along with a processed flag.
+
+The loop (WHILE) processes one dealer at a time, marking them as processed.
+
+The loop terminates when all dealer codes are processed (IsProcessed = 1 for all).
+
+
+
+-- Declare the GroupID to filter dealers
+DECLARE @GroupID INT = 111  
+
+-- Insert all dealers for this group into a table variable with a processed flag
+DECLARE @DealerList TABLE (
+    DealerCode VARCHAR(50), 
+    IsProcessed INT DEFAULT(0)
+)
+
+INSERT INTO @DealerList (DealerCode)
+SELECT DealerCode
+FROM   TblGroupDealer
+WHERE  GroupID = @GroupID;
+
+-- Instead of looping, update all rows in one go
+UPDATE @DealerList
+SET    IsProcessed = 1;
+
+-- (Optional) Select results to confirm processing
+SELECT * 
+FROM   @DealerList;
+
+
+Why this is better:
+
+No WHILE loop → SQL Server processes everything in a single set-based operation.
+
+Faster for large data → Uses SQL Server’s query optimizer instead of iterative row-by-row logic.
+
+Cleaner code → No need to reassign values or fetch rows one by one.
+
+⚡ When to still use loops:
+
+If you have complex logic per dealer (like calling a stored procedure, sending notifications, or external API calls), you may still need a loop.
+
+But if it’s just updates/inserts/flags, set-based wins.
