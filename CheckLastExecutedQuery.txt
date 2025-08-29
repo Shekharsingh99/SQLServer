@@ -1,0 +1,33 @@
+-- Select top 10 queries executed in SQL Server, ordered by their most recent execution time
+SELECT TOP 10 
+       dest.TEXT AS [Query],              -- The actual SQL query text
+       deqs.execution_count AS [Count],   -- How many times this query has been executed
+       deqs.last_execution_time AS [Time] -- The last time this query was executed
+FROM   sys.dm_exec_query_stats AS deqs    -- DMV that stores statistics about cached query plans
+CROSS APPLY sys.dm_exec_sql_text(deqs.sql_handle) AS dest 
+       -- CROSS APPLY is used to extract the SQL text from the query plan handle
+ORDER BY deqs.last_execution_time DESC    -- Order results by the most recent execution time (latest first)
+
+
+
+
+
+
+
+What this does:
+
+sys.dm_exec_query_stats → DMV holding stats about query executions (cached plans, counts, times, etc.).
+
+CROSS APPLY sys.dm_exec_sql_text → Converts the binary sql_handle into readable SQL text.
+
+TOP 10 → Limits output to the 10 most recent queries.
+
+Columns shown →
+
+Query → The SQL statement executed.
+
+Count → Number of times query was executed.
+
+Time → Last execution time.
+
+ORDER BY last_execution_time DESC → Most recently executed queries appear first.
