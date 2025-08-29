@@ -1,0 +1,54 @@
+-- View all SQL Server configuration options and their current values
+SELECT * 
+FROM sys.configurations;   
+
+-- Retrieve detailed server-level properties
+SELECT  
+    SERVERPROPERTY('ProductVersion') AS ProductVersion,               -- SQL Server version (e.g., 15.x for SQL 2019)
+    SERVERPROPERTY('ProductLevel') AS ProductLevel,                   -- Indicates patch level (RTM, SP, CU)
+    SERVERPROPERTY('ResourceVersion') AS ResourceVersion,             -- Version of the resource database
+    SERVERPROPERTY('ResourceLastUpdateDateTime') AS ResourceLastUpdateDateTime,  -- Last update applied
+    SERVERPROPERTY('Collation') AS Collation;                         -- Current server collation setting
+
+-- Check physical file locations of system databases
+SELECT name, 
+       physical_name AS current_file_location  
+FROM sys.master_files  
+WHERE database_id IN (DB_ID('master'), DB_ID('model'), DB_ID('msdb'), DB_ID('tempdb')); 
+-- This helps identify where system DB files are located on disk
+
+
+
+
+/QUIET or /Q               → Run setup without UI (silent mode).
+/ACTION=REBUILDDATABASE    → Rebuild system databases (master, model, msdb, tempdb).
+/INSTANCENAME=InstanceName → Target SQL Server instance (default: MSSQLSERVER).
+/SQLSYSADMINACCOUNTS=...   → Add users/groups to sysadmin role.
+/SAPWD=StrongPassword      → (Optional) Set SA account password.
+/SQLCOLLATION=CollationName→ (Optional) Define new server-level collation.
+
+
+
+
+
+Steps to rebuild system databases
+
+Open CMD as Administrator.
+
+Navigate to the folder containing setup.exe (SQL Server installation media).
+
+Run command (example):
+
+Setup /QUIET /ACTION=REBUILDDATABASE /INSTANCENAME=[INSTANCE_NAME] `
+      /SQLSYSADMINACCOUNTS=[SYS_USERNAME] `
+      /SAPWD=[SYS_PWD] `
+      /SQLCOLLATION=[NEW_COLLATION]
+
+
+Replace [INSTANCE_NAME] with your SQL instance name.
+
+Replace [SYS_USERNAME] with a valid Windows admin account.
+
+Replace [SYS_PWD] with a strong password.
+
+Replace [NEW_COLLATION] only if you want to change collation.
