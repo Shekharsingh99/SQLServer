@@ -1,0 +1,21 @@
+--create table #Report
+--(SaleChannel	varchar(50)
+--, Month1	int
+--, Month2	int 
+--, Month3	int 
+--, Month4	int 
+--, Month5	int)
+
+--insert into #Report
+--select 'Fleet', 6,	NULL,	14,	15,	13	UNION ALL
+--select 'New', 2,	NULL,	7,	8,	7	 UNION ALL
+--select 'UsedOthers', 12,	NULL,	7,	8, 5 UNION ALL
+--select 'Used', 10, NULL, 4, 4, 3
+
+select * from #Report
+
+SELECT	SaleChannel
+	,	(	SELECT	AVG(CAST(COL AS FLOAT)) 
+			FROM	(VALUES (T.Month1), (T.Month2), (T.Month3), (T.Month4), (T.Month5)) AS V(COL)
+		)	Month5Avg
+FROM	#Report AS T
