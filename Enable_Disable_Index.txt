@@ -1,0 +1,74 @@
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:      Shekhar Singh
+-- Create Date: 
+-- Description: TO DISABLE INDEXES BEFORE FACT TABLE LOAD 
+--              AND ENABLE (REBUILD) THEM AFTER LOAD COMPLETES
+-- =============================================
+
+ALTER PROCEDURE [dbo].[PROC_DISABLEANDENABLE_FACT_INDEXES]
+(
+    @FACT_TABLENAME VARCHAR(100), -- Fact table name on which indexes need to be disabled/enabled
+    @ISDISABLE BIT                -- 1 = Disable indexes, 0 = Rebuild (enable) indexes
+)
+AS
+BEGIN
+    SET NOCOUNT ON;   -- Prevents extra result sets from interfering with output
+
+    DECLARE @SQL_STRING  VARCHAR(1000);   -- Holds the dynamic SQL query to disable/enable indexes
+
+    -- If flag is set to disable indexes
+    IF @ISDISABLE = 1
+    BEGIN
+        -- Build dynamic SQL string to DISABLE all NONCLUSTERED indexes
+        -- Only for the provided table and only if indexes are currently enabled (is_disabled=0)
+        SELECT @SQL_STRING = STUFF((
+                SELECT ';' + ' ALTER INDEX ' + indx.name + ' ON ' + TBL.name + ' DISABLE '
+                FROM sys.indexes indx
+                INNER JOIN sys.tables tbl
+                    ON tbl.object_id = indx.object_id
+                WHERE tbl.name = @FACT_TABLENAME
+                  AND indx.type_desc = 'NONCLUSTERED'
+                  AND indx.is_disabled = 0
+                FOR XML PATH('')  -- Concatenate results into a single string
+            ),1,1,'');
+
+        --PRINT @SQL_STRING   -- For debugging: shows the generated SQL
+        EXEC (@SQL_STRING);   -- Execute the dynamic SQL to disable indexes
+    END
+    ELSE
+    BEGIN
+        -- Build dynamic SQL string to REBUILD all NONCLUSTERED indexes
+        -- Only for the provided table and only if indexes are currently disabled (is_disabled=1)
+        SELECT @SQL_STRING = STUFF((
+                SELECT ';' + ' ALTER INDEX ' + indx.name + ' ON ' + TBL.name + ' REBUILD '
+                FROM sys.indexes indx
+                INNER JOIN sys.tables tbl
+                    ON tbl.object_id = indx.object_id
+                WHERE tbl.name = @FACT_TABLENAME
+                  AND indx.type_desc = 'NONCLUSTERED'
+                  AND indx.is_disabled = 1
+                FOR XML PATH('')  -- Concatenate results into a single string
+            ),1,1,'');
+
+        --PRINT @SQL_STRING   -- For debugging: shows the generated SQL
+        EXEC (@SQL_STRING);   -- Execute the dynamic SQL to rebuild (enable) indexes
+    END
+END
+
+
+
+
+Explanation of key parts:
+
+@ISDISABLE = 1 → disables all NONCLUSTERED indexes on the given fact table before bulk loading (improves load performance).
+
+@ISDISABLE = 0 → rebuilds indexes back after data load so they’re usable again.
+
+STUFF(... FOR XML PATH('')) → concatenates multiple ALTER INDEX statements into one dynamic SQL string.
+
+EXEC (@SQL_STRING) → runs the generated ALTER INDEX statements.
