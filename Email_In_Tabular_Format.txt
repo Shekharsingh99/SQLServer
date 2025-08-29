@@ -1,0 +1,70 @@
+-- Create a temporary table to hold sample tennis ranking data
+CREATE TABLE #Temp 
+( 
+  [Rank]            [int],             -- Player rank
+   ,    -- Player name
+  [Ranking Points]  [int],             -- Ranking points
+        -- Country name
+)
+
+-- Insert sample data into the temp table
+INSERT INTO #Temp
+SELECT 1,'Rafael Nadal',12390,'Spain'
+UNION ALL
+SELECT 2,'Roger Federer',7965,'Switzerland'
+UNION ALL
+SELECT 3,'Novak Djokovic',7880,'Serbia'
+
+-- Declare variables to hold HTML/XML content
+DECLARE @xml NVARCHAR(MAX)
+DECLARE @body NVARCHAR(MAX)
+
+-- Build XML string with table rows (<tr>) and data cells (<td>)
+-- FOR XML PATH('tr') generates <tr> elements with <td> values inside
+SET @xml = CAST((
+       SELECT [Rank] AS 'td','',           -- First column: Rank
+              [Player Name] AS 'td','',    -- Second column: Player Name
+              [Ranking Points] AS 'td','', -- Third column: Ranking Points
+              Country AS 'td'              -- Fourth column: Country
+       FROM  #Temp 
+       ORDER BY Rank 
+       FOR XML PATH('tr'), ELEMENTS
+     ) AS NVARCHAR(MAX))
+
+-- Create the HTML body structure for the email
+-- Includes header and table definition with column names
+SET @body = '<html><body><H3>Tennis Rankings Info</H3>
+<table border = 1> 
+<tr>
+<th> Rank </th> <th> Player Name </th> <th> Ranking Points </th> <th> Country </th></tr>'    
+
+-- Append XML-generated rows into HTML body and close tags
+SET @body = @body + @xml + '</table></body></html>'
+
+-- Send the email using Database Mail (currently commented out for safety)
+-- Replace profile name, recipients, and subject as per your environment
+/*
+EXEC msdb.dbo.sp_send_dbmail
+    @profile_name = 'SQL ALERTING',     -- Replace with Database Mail profile
+    @body = @body,                      -- Email body containing HTML table
+    @body_format ='HTML',               -- Ensures HTML rendering in email
+    @recipients = 'abc@mail.com',       -- Replace with target email
+    @subject = 'E-mail in Tabular Format' ;
+*/
+
+-- Clean up: drop the temporary table
+DROP TABLE #Temp
+
+
+
+
+
+Key explanations I added:
+
+Purpose of the temp table and its columns.
+
+Why FOR XML PATH('tr') is used (to generate <tr><td>...</td></tr> rows).
+
+How HTML structure is concatenated with XML rows.
+
+Notes on sp_send_dbmail usage (parameters explained).
