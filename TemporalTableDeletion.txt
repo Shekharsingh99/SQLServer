@@ -1,0 +1,40 @@
+ALTER TABLE dbo.TemporalTable SET (SYSTEM_VERSIONING = OFF);
+-- Explanation: This command disables system-versioning on the `TemporalTable`, 
+-- which stops the SQL Server from tracking historical versions of the data in the table.
+
+DELETE FROM TemporalTableHistory;
+-- Explanation: This deletes all records from the `TemporalTableHistory` table, clearing out the historical data.
+
+ALTER TABLE dbo.TemporalTable SET 
+(SYSTEM_VERSIONING = ON
+(	HISTORY_TABLE = dbo.TempTestHistory,
+	DATA_CONSISTENCY_CHECK = ON
+));
+-- Explanation: This command re-enables system-versioning for the `TemporalTable` and links it to a history table (`TempTestHistory`).
+-- It also ensures data consistency checks are performed to maintain the integrity of the versioned data.
+
+DBCC CHECKIDENT ([TABLE_NAME], reseed, 27);
+-- Explanation: This command reseeds the identity column of the specified table (`[TABLE_NAME]`) to start at value 27.
+-- This is useful when you need to reset or adjust the starting point of the identity values.
+
+-----------------------------------------------------------------
+/* CONVERT NORMAL TO TEMPORAL TABLE */
+ALTER TABLE dbo.[TABLE_NAME] 
+    ADD 
+    [COLUMN_NAME_1] datetime2 GENERATED ALWAYS AS ROW START NOT NULL
+        DEFAULT SYSUTCDATETIME()
+,
+    DCHA_VALID_TO_DCHA datetime2 GENERATED ALWAYS AS ROW END NOT NULL
+        DEFAULT CAST('9999-12-31 23:59:59.9999999' AS datetime2),
+    PERIOD FOR SYSTEM_TIME ([COLUMN_NAME_1],[COLUMN_NAME_2]);
+-- Explanation: This command converts a regular table into a temporal table by adding two datetime2 columns:
+-- - `ROW START` (`[COLUMN_NAME_1]`) tracks the starting time of each record.
+-- - `ROW END` (`DCHA_VALID_TO_DCHA`) tracks the ending time of each record.
+-- It also sets the period of system-time for versioning using the newly added columns.
+
+ALTER TABLE dbo.[TABLE_NAME]
+    SET (SYSTEM_VERSIONING = ON (HISTORY_TABLE = dbo.[TABLE_NAME_HISTORY]));
+-- Explanation: This command enables system-versioning on the table, linking it to a history table (`[TABLE_NAME_HISTORY]`).
+-- The system will now track all changes to the table's rows and store the historical data in the history table.
+
+GO;

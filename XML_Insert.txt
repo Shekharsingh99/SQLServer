@@ -1,0 +1,9 @@
+DECLARE @XMLExample XML  -- Declare a variable of type XML
+
+-----------------------------------------------------------
+-- Use the nodes() function to shred the XML and retrieve each 'Allocation' node
+-- The XPath '/TblAudiRelationshipAllocation/Allocation' is used to find all 'Allocation' elements
+SELECT InputData.AllocationPercentage.value('ModelId[1]', 'INT') ModelID,  -- Extract the value of 'ModelId' as an integer
+       InputData.AllocationPercentage.value('DiscountAllocation[1]', 'FLOAT') DiscountAllocation  -- Extract the value of 'DiscountAllocation' as a float
+FROM   @XMLExample.nodes('/TblAudiRelationshipAllocation/Allocation') AS InputData(AllocationPercentage)  -- Shred the XML using 'nodes()' and assign an alias 'InputData' for the Allocation element
+-----------------------------------------------------------
