@@ -1,0 +1,41 @@
+﻿--1. ✅ EVALUATE [TABLE_NAME];
+--✅ Explanation:
+
+This returns the entire table [TABLE_NAME] as a result set.
+
+--Equivalent to SELECT * FROM [TABLE_NAME] in SQL.
+--
+--📌 Example:
+EVALUATE Sales
+
+--✅ Result:
+
+--All columns and rows from the Sales table.
+
+2. ✅ EVALUATE VALUES('[TABLE_NAME]'[COLUMN_NAME]);
+✅ Explanation:
+
+Returns a distinct list of values from [COLUMN_NAME] in the table [TABLE_NAME].
+
+Equivalent to SELECT DISTINCT [COLUMN_NAME] FROM [TABLE_NAME] in SQL.
+
+📌 Example:
+EVALUATE VALUES('Customers'[Country])
+
+✅ Result:
+
+A single-column table listing distinct countries from the Customers table.
+
+3. ✅ EVALUATE FILTER('[TABLE_NAME]', [COLUMN_NAME] = "FILTER");
+✅ Explanation:
+
+Returns all rows from [TABLE_NAME] where the value of [COLUMN_NAME] equals "FILTER".
+
+Equivalent to SELECT * FROM [TABLE_NAME] WHERE [COLUMN_NAME] = 'FILTER' in SQL.
+
+📌 Example:
+EVALUATE FILTER('Sales', [Region] = "West")
+
+✅ Result:
+
+All rows from the Sales table where the Region column equals "West".

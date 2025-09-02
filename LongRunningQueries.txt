@@ -1,0 +1,24 @@
+-- Select top 50 most CPU-intensive queries and include their SQL text and execution plan
+SELECT  
+    st.text,                  -- The actual SQL query text
+    qp.query_plan,           -- The XML query execution plan
+    qs.*                     -- All columns from sys.dm_exec_query_stats
+FROM (
+    -- Inner query: Select top 50 queries ordered by total CPU time used
+    SELECT TOP 50 *
+    FROM sys.dm_exec_query_stats
+    ORDER BY total_worker_time DESC  -- Total CPU time used (in microseconds)
+) AS qs
+-- Retrieve SQL text for each query using CROSS APPLY
+CROSS APPLY sys.dm_exec_sql_text(qs.sql_handle) AS st
+
+-- Retrieve execution plan for each query
+CROSS APPLY sys.dm_exec_query_plan(qs.plan_handle) AS qp
+
+-- Filter results to show only queries with high CPU or elapsed time per execution
+WHERE 
+    qs.max_worker_time > 300         -- Max CPU time for a single execution (in microseconds)
+    OR qs.max_elapsed_time > 300     -- Max total time for a single execution (in microseconds)
+
+-- Final ordering by total CPU time used
+ORDER BY cpu_time DESC;
